@@ -1,5 +1,5 @@
 name: "Edilkamin BLE"
-version: "1.3.1"
+version: "1.3.2"
 slug: edilkamin_ble
 description: "Local Bluetooth control for Edilkamin pellet stoves with The Mind module"
 url: "https://github.com/StopThePcap/edilkamin-ble"

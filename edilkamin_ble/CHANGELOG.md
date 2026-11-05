@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.2
+
+Security and robustness release, from a security review (secret scan,
+dependency and image vulnerability scans, static analysis, code review).
+
+### Fixed
+
+- A malformed MQTT message on a command topic (e.g. invalid UTF-8) could stop
+  the add-on's MQTT handling until restart. Every message is now handled
+  in isolation and can no longer affect the others.
+- Unexpected command values are now ignored (and logged) instead of mapped to a
+  default. Previously an unknown preset set P1, an unknown fan mode set Auto,
+  and any switch payload other than `ON`, such as `true` or `1`, switched
+  *off*. Non-finite temperatures (`nan`, `inf`) are rejected.
+- The unused `tempio` tool from the base image is removed. It was the source of
+  all vulnerability findings in an image scan; the add-on never runs it.
+
 ## 1.3.1
 
 First public release.

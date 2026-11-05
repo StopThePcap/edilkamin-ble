@@ -67,6 +67,24 @@ The add-on asks for more access than most add-ons. Each item has one purpose:
 | `host_dbus` | Talking to the host's `bluetoothd` (state, pairing, pairing agent) |
 | `privileged: NET_ADMIN` | Setting the stove's LE connection parameters (supervision timeout) through the kernel's Bluetooth management API |
 
+### Security
+
+- **Anyone who can publish to your MQTT broker can control the stove**, because
+  commands arrive on MQTT topics (`edilkamin/<device>/.../set`). That is
+  normal for MQTT-based devices. If other clients or users share your broker,
+  restrict who may publish to `edilkamin/#` with the broker's access control
+  (Mosquitto ACLs).
+- Commands are validated: only the values Home Assistant sends are accepted,
+  temperatures are limited to 10–30 °C, and anything else is logged and
+  ignored.
+- The Bluetooth messages are encrypted with a fixed key that is part of
+  Edilkamin's protocol and the same for every stove, so this encryption does
+  not protect anything on its own. What protects the link is Bluetooth
+  pairing. The add-on's pairing agent approves only the configured stove, and
+  only during its own pairing attempts.
+- The add-on runs as root inside its container, like most Home Assistant
+  add-ons. It needs this for the kernel Bluetooth management socket.
+
 ## Configuration
 
 ### Finding Your Stove's MAC Address

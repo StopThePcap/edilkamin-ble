@@ -19,6 +19,11 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     "paho-mqtt>=2.1,<3.0" \
     "pycryptodome>=3.20,<4.0"
 
+# The base image ships tempio, a config-templating tool this add-on never runs.
+# Its bundled Go libraries carry known vulnerabilities that image scanners
+# report, so drop it rather than ship unused, vulnerable code.
+RUN rm -f /usr/bin/tempio
+
 # Copy application
 COPY edilkamin_ble /app/edilkamin_ble
 

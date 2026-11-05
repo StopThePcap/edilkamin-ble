@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import math
 from typing import Any, Callable, Coroutine, Optional
 
 import paho.mqtt.client as mqtt
@@ -75,6 +76,11 @@ class MQTTHandler:
             client_id=client_id or "",
         )
         self._client.reconnect_delay_set(min_delay=1, max_delay=60)
+        # paho re-raises callback exceptions by default, which ends its network
+        # thread: no more commands, state updates or reconnects until the
+        # add-on restarts. _on_message already catches everything; this is
+        # the second line of defence for any other callback.
+        self._client.suppress_exceptions = True
         self._connected = False
         self._loop_started = False
         self._has_connected_before = False
@@ -182,9 +188,23 @@ class MQTTHandler:
         userdata: Any,
         msg: mqtt.MQTTMessage,
     ) -> None:
-        """Handle incoming MQTT message."""
+        """Handle an incoming MQTT message; never raises.
+
+        Anything that can publish to the broker can reach this, so a malformed
+        message must not take down MQTT handling for everything else.
+        """
+        try:
+            self._handle_message(client, msg)
+        except Exception:
+            _LOGGER.exception("Ignoring MQTT message on %s that could not be handled", msg.topic)
+
+    def _handle_message(self, client: mqtt.Client, msg: mqtt.MQTTMessage) -> None:
         topic = msg.topic
-        payload = msg.payload.decode("utf-8")
+        try:
+            payload = msg.payload.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            _LOGGER.warning("Ignoring MQTT message on %s: payload is not valid UTF-8", topic)
+            return
 
         _LOGGER.debug("Received message on %s: %s", topic, payload)
 
@@ -494,35 +514,58 @@ class CommandHandler:
             await asyncio.sleep(COMMAND_SETTLE_DELAY)
             self._refresh_event.set()
 
+    # Command parsing is strict: only the values Home Assistant sends for
+    # these entities are accepted. Anything else is logged and ignored. A
+    # lenient fallback (unknown preset -> P1, unknown fan -> Auto, any switch
+    # payload other than "ON" -> OFF) let a stray or malformed message change
+    # the stove, e.g. "true" switching it off.
+
     async def _handle_mode(self, payload: str) -> None:
         """Handle climate mode command."""
-        if payload.lower() == "heat":
+        mode = payload.lower()
+        if mode == "heat":
             await self._stove.set_power(True)
-        elif payload.lower() == "off":
+        elif mode == "off":
             await self._stove.set_power(False)
+        else:
+            _LOGGER.warning("Ignoring unknown mode %r (expected heat/off)", payload)
 
     async def _handle_preset(self, payload: str) -> None:
         """Handle preset mode command."""
+        if payload not in PRESET_TO_LEVEL:
+            _LOGGER.warning(
+                "Ignoring unknown preset %r (expected one of %s)",
+                payload,
+                ", ".join(PRESET_TO_LEVEL),
+            )
+            return
         if payload == "Auto":
             await self._stove.set_automatic_mode(True)
         else:
-            level = PRESET_TO_LEVEL.get(payload, 1)
-            if level > 0:
-                await self._stove.set_automatic_mode(False)
-                await self._stove.set_power_level(level)
+            await self._stove.set_automatic_mode(False)
+            await self._stove.set_power_level(PRESET_TO_LEVEL[payload])
 
     async def _handle_fan_mode(self, payload: str) -> None:
         """Handle fan mode command."""
-        speed = FAN_MODE_TO_VALUE.get(payload, 6)
-        await self._stove.set_fan_speed(speed)
+        if payload not in FAN_MODE_TO_VALUE:
+            _LOGGER.warning(
+                "Ignoring unknown fan mode %r (expected one of %s)",
+                payload,
+                ", ".join(FAN_MODE_TO_VALUE),
+            )
+            return
+        await self._stove.set_fan_speed(FAN_MODE_TO_VALUE[payload])
 
     async def _handle_temperature(self, payload: str) -> None:
-        """Handle temperature command."""
+        """Handle temperature command (clamped to 10-30 °C by the stove model)."""
         try:
             temp = float(payload)
-            await self._stove.set_temperature(temp)
         except ValueError:
-            _LOGGER.error("Invalid temperature value: %s", payload)
+            temp = math.nan
+        if not math.isfinite(temp):
+            _LOGGER.warning("Ignoring invalid temperature %r", payload)
+            return
+        await self._stove.set_temperature(temp)
 
     async def _handle_switch(
         self,
@@ -530,5 +573,8 @@ class CommandHandler:
         handler: Callable[[bool], Coroutine[Any, Any, bool]],
     ) -> None:
         """Handle switch command."""
-        enabled = payload.upper() == "ON"
-        await handler(enabled)
+        value = payload.upper()
+        if value not in ("ON", "OFF"):
+            _LOGGER.warning("Ignoring switch payload %r (expected ON/OFF)", payload)
+            return
+        await handler(value == "ON")

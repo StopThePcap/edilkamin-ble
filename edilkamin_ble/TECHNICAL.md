@@ -563,6 +563,46 @@ Items that need a capture from real hardware to resolve:
   write-without-response only, which means no flow control at the GATT layer;
   a lost write currently surfaces as a command timeout.
 
+## Security Review
+
+Checks run for 1.3.2, with results and the reasoning for anything not changed:
+
+| Check | Result |
+|---|---|
+| Secret scan (gitleaks, full git history and files) | No findings |
+| Dependency vulnerabilities (OSV: bleak, dbus-fast, paho-mqtt, pycryptodome) | None known |
+| Image scan (Trivy: Alpine packages, Python packages) | Clean; the only findings were in the base image's unused `tempio`, now removed |
+| Static analysis (Bandit) | 3 findings, none actionable (below) |
+| Dockerfile configuration (Trivy) | 2 findings, accepted (below) |
+
+Accepted findings:
+
+- *Bandit B413, "pyCrypto is unmaintained" (high):* false positive. The add-on
+  uses `pycryptodome`, which is maintained and uses the same `Crypto` import
+  name.
+- *Bandit B310, urlopen (medium):* the only URL is the fixed internal
+  Supervisor endpoint `http://supervisor/services/mqtt`, not user input.
+- *Bandit B110, try/except/pass (low):* deliberate, during disconnect cleanup.
+- *Dockerfile runs as root (high):* standard for Home Assistant add-ons, and
+  required for the Bluetooth mgmt control socket (with `NET_ADMIN`).
+- *No HEALTHCHECK (low):* the Supervisor's own add-on watchdog covers this.
+
+Design points relevant to security:
+
+- **MQTT is the control interface.** Anything that can publish to the broker
+  can command the stove. Commands are parsed strictly (only Home Assistant's
+  documented values; temperature clamped to 10–30 °C; everything else logged
+  and ignored). The message callback cannot raise into paho's network thread,
+  so a malformed message cannot stop MQTT handling.
+- **The AES-128-CBC key and IV are fixed** by Edilkamin's protocol, identical
+  for all stoves and already public. This encryption is obfuscation, not
+  security. The link's real protection is BLE pairing (LE Secure Connections).
+- **The pairing agent** is registered only during the add-on's own pairing
+  attempts. It approves requests only for the configured stove's address and
+  rejects all others.
+- **No secrets are logged.** The startup log shows the MQTT host and username,
+  never the password.
+
 ## Reference
 
 Protocol based on reverse engineering from:
