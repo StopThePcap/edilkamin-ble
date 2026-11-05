@@ -6,7 +6,6 @@ url: "https://github.com/StopThePcap/edilkamin-ble"
 arch:
   - amd64
   - aarch64
-  - armv7
 init: false
 startup: services
 boot: auto

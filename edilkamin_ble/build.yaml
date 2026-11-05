@@ -1,7 +1,10 @@
+# Pinned to the Alpine version the add-on is tested on (3.24, Python 3.14), so
+# every install builds the same thing. Bump deliberately, after testing.
+# armv7 is not offered: Home Assistant stopped publishing 32-bit base images
+# after Alpine 3.22.
 build_from:
-  amd64: ghcr.io/home-assistant/amd64-base:latest
-  aarch64: ghcr.io/home-assistant/aarch64-base:latest
-  armv7: ghcr.io/home-assistant/armv7-base:latest
+  amd64: ghcr.io/home-assistant/amd64-base:3.24
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.24
 labels:
   org.opencontainers.image.title: "Edilkamin BLE"
   org.opencontainers.image.description: "Local Bluetooth control for Edilkamin pellet stoves"

@@ -53,7 +53,8 @@ reverse-engineered protocol and is provided **as is, without any warranty**
 
 ## Requirements
 
-- Home Assistant OS or Supervised (the add-on needs the Supervisor)
+- Home Assistant OS or Supervised (the add-on needs the Supervisor), on a
+  64-bit system (amd64 or aarch64, e.g. a Raspberry Pi 4/5 with 64-bit OS)
 - An Edilkamin stove with "The Mind" module
 - A Bluetooth adapter that supports BLE on Linux (see
   [Tested Hardware](edilkamin_ble/DOCS.md#tested-hardware))

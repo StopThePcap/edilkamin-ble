@@ -1,0 +1,41 @@
+configuration:
+  ble_mac_address:
+    name: Stove Bluetooth address
+    description: >-
+      Bluetooth MAC address of the stove, e.g. AA:BB:CC:DD:EE:FF. The stove
+      advertises as "EDILKAMIN_..."; find it with "bluetoothctl scan on" on
+      the Home Assistant host or in the Edilkamin app.
+  poll_interval:
+    name: Poll interval
+    description: >-
+      Seconds between status reads from the stove (5-300). Commands trigger an
+      extra read right away.
+  mqtt_host:
+    name: MQTT broker host
+    description: >-
+      Hostname of the MQTT broker. Keep "core-mosquitto" when using the
+      Mosquitto broker add-on.
+  mqtt_port:
+    name: MQTT broker port
+    description: Port of the MQTT broker, usually 1883.
+  mqtt_username:
+    name: MQTT username
+    description: Username for the MQTT broker, if it requires one.
+  mqtt_password:
+    name: MQTT password
+    description: Password for the MQTT broker, if it requires one.
+  mqtt_discovery_prefix:
+    name: MQTT discovery prefix
+    description: >-
+      Home Assistant's MQTT discovery prefix. Only change this if you changed
+      it in the MQTT integration as well.
+  device_name:
+    name: Device name
+    description: >-
+      Name of the stove device in Home Assistant. Entity names are derived
+      from it.
+  log_level:
+    name: Log level
+    description: >-
+      How much the add-on logs. Use "debug" when troubleshooting a connection
+      problem.
