@@ -1,0 +1,51 @@
+name: "Edilkamin BLE"
+version: "1.3.1"
+slug: edilkamin_ble
+description: "Local Bluetooth control for Edilkamin pellet stoves with The Mind module"
+url: "https://github.com/StopThePcap/edilkamin-ble"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+init: false
+startup: services
+boot: auto
+
+# Required for Bluetooth access
+host_network: true
+host_dbus: true
+# Lets the add-on set per-device LE connection parameters (a longer
+# supervision timeout) through the kernel's Bluetooth management API.
+privileged:
+  - NET_ADMIN
+
+# MQTT service dependency
+services:
+  - mqtt:need
+
+# Persistent data storage
+map:
+  - share:rw
+
+# Configuration options
+options:
+  ble_mac_address: ""
+  poll_interval: 30
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  mqtt_discovery_prefix: "homeassistant"
+  device_name: "Edilkamin Stove"
+  log_level: "info"
+
+schema:
+  ble_mac_address: str
+  poll_interval: int(5,300)
+  mqtt_host: str
+  mqtt_port: port
+  mqtt_username: str?
+  mqtt_password: password?
+  mqtt_discovery_prefix: str
+  device_name: str
+  log_level: list(debug|info|warning|error)

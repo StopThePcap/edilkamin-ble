@@ -1,0 +1,9 @@
+build_from:
+  amd64: ghcr.io/home-assistant/amd64-base:latest
+  aarch64: ghcr.io/home-assistant/aarch64-base:latest
+  armv7: ghcr.io/home-assistant/armv7-base:latest
+labels:
+  org.opencontainers.image.title: "Edilkamin BLE"
+  org.opencontainers.image.description: "Local Bluetooth control for Edilkamin pellet stoves"
+  org.opencontainers.image.source: "https://github.com/StopThePcap/edilkamin-ble"
+  org.opencontainers.image.licenses: "Apache-2.0"
