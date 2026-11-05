@@ -16,6 +16,12 @@ First public release.
   plus ignition sub-phase.
 - All 25 Edilkamin alarm codes, with descriptions.
 
+### Setup
+
+- With the Mosquitto broker add-on no MQTT settings are needed: the broker
+  address and login come from the Home Assistant Supervisor. A rejected login
+  is explained in the log, with what to change.
+
 ### Pairing and connection
 
 - Pairing is handled entirely by the add-on: a BlueZ pairing agent approves

@@ -81,7 +81,13 @@ class EdilkaminAddon:
         """Start the add-on."""
         _LOGGER.info("Starting Edilkamin BLE Add-on")
         _LOGGER.info("BLE MAC: %s", self._config.ble_mac_address)
-        _LOGGER.info("MQTT: %s:%d", self._config.mqtt_host, self._config.mqtt_port)
+        _LOGGER.info(
+            "MQTT: %s:%d, user %s (from %s)",
+            self._config.mqtt_host,
+            self._config.mqtt_port,
+            self._config.mqtt_username or "<none>",
+            self._config.mqtt_source,
+        )
 
         self._running = True
 

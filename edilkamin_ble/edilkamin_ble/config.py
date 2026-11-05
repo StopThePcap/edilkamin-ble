@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -11,6 +12,33 @@ _LOGGER = logging.getLogger(__name__)
 
 # Default Home Assistant add-on config path
 ADDON_CONFIG_PATH = "/data/options.json"
+
+# Broker details the Supervisor hands to add-ons that declare `mqtt:need`.
+SUPERVISOR_MQTT_URL = "http://supervisor/services/mqtt"
+DEFAULT_MQTT_HOST = "core-mosquitto"
+
+
+def _supervisor_mqtt_service() -> tuple[Optional[dict], str]:
+    """Ask the Supervisor for the MQTT broker's host, port and credentials.
+
+    Returns:
+        (service data or None, reason when None).
+    """
+    token = os.environ.get("SUPERVISOR_TOKEN")
+    if not token:
+        return None, "not running as a Home Assistant add-on"
+    request = urllib.request.Request(
+        SUPERVISOR_MQTT_URL, headers={"Authorization": f"Bearer {token}"}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            body = json.load(response)
+    except Exception as e:  # HTTP 400 when no MQTT broker add-on provides it
+        return None, f"no MQTT service available from the Supervisor ({e})"
+    data = body.get("data") or {}
+    if body.get("result") != "ok" or not data.get("host"):
+        return None, "no MQTT service available from the Supervisor"
+    return data, ""
 
 
 @dataclass
@@ -36,6 +64,10 @@ class Config:
 
     # Logging
     log_level: str = "info"
+
+    # Where the MQTT settings came from, for the startup log (load() runs
+    # before logging is configured).
+    mqtt_source: str = "add-on configuration"
 
     def __post_init__(self) -> None:
         """Post-initialization processing."""
@@ -110,13 +142,36 @@ class Config:
             try:
                 with open(path, "r") as f:
                     data = json.load(f)
-                return cls.from_dict(data)
+                config = cls.from_dict(data)
+                config._use_supervisor_mqtt_if_unset()
+                return config
             except Exception as e:
                 _LOGGER.warning("Failed to load config file: %s", e)
 
         # Fall back to environment variables
         _LOGGER.info("Loading config from environment variables")
         return cls.from_env()
+
+    def _use_supervisor_mqtt_if_unset(self) -> None:
+        """Take broker details from the Supervisor unless set explicitly.
+
+        With the Mosquitto add-on, anonymous access is off, so a blank
+        username would otherwise just fail to connect. The Supervisor provides
+        a broker account to add-ons that declare `mqtt:need`, which this
+        add-on does. An explicitly configured username, or a broker other than
+        the default host, is always used as configured.
+        """
+        if self.mqtt_username or self.mqtt_host not in ("", DEFAULT_MQTT_HOST):
+            return
+        service, reason = _supervisor_mqtt_service()
+        if service is None:
+            self.mqtt_source = f"add-on configuration ({reason})"
+            return
+        self.mqtt_host = service["host"]
+        self.mqtt_port = int(service.get("port") or self.mqtt_port)
+        self.mqtt_username = service.get("username") or None
+        self.mqtt_password = service.get("password") or None
+        self.mqtt_source = "MQTT broker add-on (credentials from the Supervisor)"
 
     def validate(self) -> list[str]:
         """Validate configuration.

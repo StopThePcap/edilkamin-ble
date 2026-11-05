@@ -14,16 +14,21 @@ configuration:
     name: MQTT broker host
     description: >-
       Hostname of the MQTT broker. Keep "core-mosquitto" when using the
-      Mosquitto broker add-on.
+      Mosquitto broker add-on; the add-on then connects automatically.
   mqtt_port:
     name: MQTT broker port
     description: Port of the MQTT broker, usually 1883.
   mqtt_username:
     name: MQTT username
-    description: Username for the MQTT broker, if it requires one.
+    description: >-
+      Leave empty with the Mosquitto add-on: credentials are then obtained
+      from the Supervisor automatically. Only for another broker that needs a
+      login.
   mqtt_password:
     name: MQTT password
-    description: Password for the MQTT broker, if it requires one.
+    description: >-
+      Leave empty with the Mosquitto add-on. Only for another broker that
+      needs a login.
   mqtt_discovery_prefix:
     name: MQTT discovery prefix
     description: >-

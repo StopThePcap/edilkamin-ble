@@ -46,10 +46,12 @@ reverse-engineered protocol and is provided **as is, without any warranty**
 1. Add this repository in Home Assistant: **Settings → Add-ons → Add-on Store
    → ⋮ → Repositories**, and enter `https://github.com/StopThePcap/edilkamin-ble`.
 2. Install **Edilkamin BLE**.
-3. Set your stove's Bluetooth MAC address in the add-on configuration, along
-   with your MQTT broker details if you don't use the Mosquitto add-on.
-4. Start the add-on. The stove appears as a device under the MQTT integration
-   and pairs automatically.
+3. In the add-on's configuration, set your stove's Bluetooth MAC address.
+   With the Mosquitto broker add-on that is all: leave the MQTT settings
+   empty and the add-on gets the broker login from Home Assistant. Only for
+   another broker, fill in its address and login.
+4. Start the add-on. The stove pairs automatically and appears as a device
+   under the MQTT integration.
 
 ## Requirements
 
@@ -58,7 +60,8 @@ reverse-engineered protocol and is provided **as is, without any warranty**
 - An Edilkamin stove with "The Mind" module
 - A Bluetooth adapter that supports BLE on Linux (see
   [Tested Hardware](edilkamin_ble/DOCS.md#tested-hardware))
-- An MQTT broker, e.g. the Mosquitto add-on
+- The Mosquitto broker add-on (or another MQTT broker) and the MQTT
+  integration set up in Home Assistant
 
 ## Status
 

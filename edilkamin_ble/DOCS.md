@@ -18,7 +18,10 @@ Local Bluetooth control for Edilkamin pellet stoves equipped with "The Mind" WiF
 
 1. **Edilkamin stove with "The Mind" module** - The stove must have the Edilkamin WiFi/Bluetooth module installed
 2. **Bluetooth adapter** - A Bluetooth Low Energy (BLE) compatible adapter connected to your Home Assistant host
-3. **MQTT broker** - The Mosquitto broker add-on (or any MQTT broker)
+3. **MQTT** - The **Mosquitto broker** add-on, and the **MQTT** integration
+   set up in Home Assistant (*Settings → Devices & services*; Home Assistant
+   offers it automatically once Mosquitto runs). Another MQTT broker works too,
+   see Configuration.
 
 ## Installation
 
@@ -81,20 +84,40 @@ The add-on asks for more access than most add-ons. Each item has one purpose:
 | `poll_interval` | Seconds between status polls | 30 |
 | `mqtt_host` | MQTT broker hostname | core-mosquitto |
 | `mqtt_port` | MQTT broker port | 1883 |
-| `mqtt_username` | MQTT username (if required) | - |
-| `mqtt_password` | MQTT password (if required) | - |
+| `mqtt_username` | MQTT username. **Leave empty with the Mosquitto add-on** | - |
+| `mqtt_password` | MQTT password. **Leave empty with the Mosquitto add-on** | - |
 | `mqtt_discovery_prefix` | Home Assistant MQTT discovery prefix | homeassistant |
 | `device_name` | Name shown in Home Assistant | Edilkamin Stove |
 | `log_level` | Logging level (debug/info/warning/error) | info |
 
+### MQTT
+
+**With the Mosquitto broker add-on (most setups), leave all MQTT options at
+their defaults and the username and password empty.** The add-on then gets the
+broker address and an account from the Home Assistant Supervisor. The startup
+log confirms it:
+
+```
+MQTT: core-mosquitto:1883, user addons (from MQTT broker add-on (credentials from the Supervisor))
+```
+
+With **another broker**, set `mqtt_host`, `mqtt_port` and, if the broker needs
+them, `mqtt_username` and `mqtt_password`. Settings you enter are always used
+as entered.
+
 ### Example Configuration
+
+With the Mosquitto add-on, only the stove address is needed:
 
 ```yaml
 ble_mac_address: "AA:BB:CC:DD:EE:FF"
+```
+
+Optional settings, shown with their defaults:
+
+```yaml
 poll_interval: 30
-mqtt_host: "core-mosquitto"
-mqtt_port: 1883
-device_name: "Living Room Stove"
+device_name: "Edilkamin Stove"
 log_level: "info"
 ```
 
@@ -234,10 +257,22 @@ add-on, or clear `edilkamin/<device_id>/availability` with MQTT Explorer.
 
 ### MQTT Issues
 
+**"The MQTT broker rejected the login"** in the log: with the Mosquitto add-on,
+clear `mqtt_username` and `mqtt_password` so the add-on uses the
+Supervisor-provided account. With another broker, check the username and
+password.
+
+**The add-on runs but no stove device appears:** set up the MQTT integration
+in Home Assistant (*Settings → Devices & services*). The add-on publishes its
+entities through MQTT discovery, which the integration picks up.
+
+Otherwise:
+
 1. Verify the Mosquitto add-on is running
-2. Check MQTT credentials if authentication is enabled
-3. Use MQTT Explorer to verify discovery messages are published
-4. Check the add-on logs for MQTT connection errors
+2. Check the first lines of the add-on log: they show which broker and user it
+   connects with
+3. Use MQTT Explorer to check that discovery messages appear under
+   `homeassistant/`
 
 ### Debug Logging
 

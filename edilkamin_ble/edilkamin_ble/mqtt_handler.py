@@ -151,6 +151,17 @@ class MQTTHandler:
             self._has_connected_before = True
         else:
             _LOGGER.error("Failed to connect to MQTT broker: %s", rc_value)
+            # 4/5 (MQTT 3.1.1) and 134/135 (MQTT 5): bad credentials or not
+            # authorised. By far the most common setup problem, so say how to
+            # fix it.
+            if rc_value in (4, 5, 134, 135):
+                _LOGGER.error(
+                    "The MQTT broker rejected the login. With the Mosquitto "
+                    "add-on, leave MQTT username and password empty so the "
+                    "add-on gets credentials from the Supervisor automatically. "
+                    "Otherwise enter a valid broker user (e.g. a Home Assistant "
+                    "user for Mosquitto)."
+                )
             self._connected = False
 
     def _on_disconnect(self, client: mqtt.Client, userdata: Any, *args) -> None:
