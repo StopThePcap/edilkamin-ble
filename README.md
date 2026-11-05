@@ -50,8 +50,17 @@ reverse-engineered protocol and is provided **as is, without any warranty**
    With the Mosquitto broker add-on that is all: leave the MQTT settings
    empty and the add-on gets the broker login from Home Assistant. Only for
    another broker, fill in its address and login.
-4. Start the add-on. The stove pairs automatically and appears as a device
-   under the MQTT integration.
+4. **Put the stove in pairing mode.** Close the Edilkamin phone app first: the
+   stove accepts one Bluetooth connection at a time. Then, depending on your
+   model, either enable Bluetooth pairing from the stove's panel (see your
+   stove's manual), or power-cycle the stove (switch it off at the mains and
+   back on). Many stoves accept pairing only for a short while after
+   power-up. Some accept it at any time.
+5. Start the add-on right away. It pairs with the stove by itself, and the
+   stove appears as a device under the MQTT integration with **Bluetooth
+   Status** `Connected`. If the status shows `Not paired` or `Pairing failed`,
+   put the stove in pairing mode again and press **Pair Stove** on the device
+   page. See [Pairing the Stove](edilkamin_ble/DOCS.md#pairing-the-stove).
 
 ## Requirements
 

@@ -174,27 +174,50 @@ so auto-generated dashboards stay short.
 The stove must be paired with your Home Assistant host's Bluetooth adapter
 before it will answer commands. The pairing persists across reboots.
 
-When no pairing is stored, the add-on pairs by itself on its first connection.
-You normally do not have to do anything. Use the steps below to re-pair, for
-example after changing the Bluetooth adapter or if **Bluetooth Status** shows
-`Pairing required`.
+When no pairing is stored, the add-on pairs by itself on its first connection,
+**provided the stove accepts pairing at that moment** (see below). Use the
+steps further down to re-pair, for example after changing the Bluetooth
+adapter or if **Bluetooth Status** shows `Not paired`, `Pairing required` or
+`Pairing failed`.
+
+### Putting the stove in pairing mode
+
+Whether a stove accepts a new pairing at any time or only in a pairing mode
+depends on the model and firmware. Before the first start of the add-on, and
+whenever you re-pair:
+
+1. **Close the Edilkamin phone app** (or turn off the phone's Bluetooth). The
+   stove accepts one Bluetooth connection at a time.
+2. **Put the stove in pairing mode**, depending on your model:
+   - If the stove's panel or manual has a Bluetooth pairing option (sometimes
+     called "pairing", "BT" or similar in the settings menu), enable it as
+     described in **your stove's manual**.
+   - Otherwise **power-cycle the stove**: switch it off at the mains (or the
+     main switch on the back), wait 10 seconds, and switch it back on. Many
+     stoves accept pairing only for a short while after power-up.
+3. Start the add-on, or press **Pair Stove**, right away.
+
+If unsure, power-cycling is safe to try. It does not change any stove settings.
+Check the stove's state first, though: do not cut power during operation if
+your manual advises against it. Some models then run a cooling cycle and report
+a power-outage alarm, which you reset on the stove.
 
 ### From Home Assistant (recommended)
 
 1. Start the add-on.
-2. Open the Edilkamin Stove device and press **Pair Stove**. The
+2. Put the stove in pairing mode (see above).
+3. Open the Edilkamin Stove device and press **Pair Stove**. The
    **Bluetooth Status** sensor changes to `Pairing`.
-3. The add-on removes any old pairing, watches for the stove for 3 minutes,
-   and pairs as soon as it accepts. If it has not paired within a minute,
-   power-cycle the stove (switch it off at the mains and back on).
-4. **Bluetooth Status** changes to `Connected` on success, or `Pairing failed`
-   if the window passed. In that case, just try again.
-
-Close the Edilkamin phone app first: the stove accepts one connection at a time.
+4. The add-on removes any old pairing, watches for the stove for 3 minutes,
+   and pairs as soon as it accepts.
+5. **Bluetooth Status** changes to `Connected` on success, or `Pairing failed`
+   if the window passed. In that case, put the stove in pairing mode again and
+   press **Pair Stove** once more.
 
 ### Manually (fallback)
 
-Stop the add-on, copy `pair_stove.sh` to the HA host and run it. It removes
+Stop the add-on, put the stove in pairing mode, copy `pair_stove.sh` to the HA
+host and run it. It removes
 the old pairing first; without that, `bluetoothctl pair` answers "AlreadyExists"
 and nothing changes. Pairing needs an agent that confirms the request: the
 script feeds `yes` to bluetoothctl's agent for that. Pairing with a one-shot
@@ -207,17 +230,20 @@ script feeds `yes` to bluetoothctl's agent for that. Pairing with a one-shot
 | `Connected` | Talking to the stove | — |
 | `Connecting` / `Disconnected` | Link down, retrying with backoff | Usually nothing; see Connection Drops |
 | `No adapter` | BlueZ has no powered Bluetooth adapter | Check the adapter is attached to the host (`bluetoothctl list`) |
-| `Not paired` | No pairing stored for the stove | Press **Pair Stove** |
-| `Pairing required` | A pairing is stored, but the stove keeps rejecting it | Press **Pair Stove** |
-| `Pairing` | Pairing mode is active | Wait; power-cycle the stove if it takes over a minute |
-| `Pairing failed` | Pairing mode ended without success | Press **Pair Stove** and try again |
+| `Not paired` | No pairing stored for the stove | Put the stove in pairing mode, then press **Pair Stove** |
+| `Pairing required` | A pairing is stored, but the stove keeps rejecting it | Put the stove in pairing mode, then press **Pair Stove** |
+| `Pairing` | The add-on is trying to pair | Make sure the stove is in pairing mode |
+| `Pairing failed` | Pairing mode ended without success | Put the stove in pairing mode again, then press **Pair Stove** |
 
 The stove does not keep pairings reliably: it has been seen discarding one
 seconds to minutes after it was made, so the cause is in its firmware. The
 add-on handles this by itself. When the stove rejects our key (or three
 connections in a row fail during setup), it re-pairs at once, which takes a few
-seconds and needs no power-cycle. Only if that automatic re-pair *fails* does it
-wait 5 minutes before trying again. A missing or resetting Bluetooth adapter
+seconds on stoves that accept pairing at any time. If your stove only accepts
+pairing in pairing mode, the automatic attempt fails and **Bluetooth Status**
+shows `Pairing failed`: put the stove in pairing mode and press **Pair Stove**.
+After a failed automatic re-pair the add-on waits 5 minutes before trying
+again by itself. A missing or resetting Bluetooth adapter
 never triggers this. The stove does require pairing: unpaired, it disconnects
 right after service discovery.
 
@@ -229,8 +255,10 @@ Run `bluetoothctl scan on` on the HA host and look for a device named `EDILKAMIN
 
 ### Stove Disconnects Immediately
 
-Check **Bluetooth Status** first. `Not paired` or `Pairing required` means the
-stove is not (or no longer) paired: see Pairing the Stove. If the add-on log also
+Check **Bluetooth Status** first. `Not paired`, `Pairing required` or
+`Pairing failed` means the stove is not (or no longer) paired: put it in pairing
+mode and press **Pair Stove** (see Pairing the Stove). Without a pairing, the
+stove disconnects right after the connection is set up. If the add-on log also
 shows `No adapter` around the same time, the adapter itself is resetting: check
 `dmesg` for USB disconnects. Some cheap Bluetooth 5.x dongles are not well
 supported on Linux and fall off the USB bus when a connection is opened.

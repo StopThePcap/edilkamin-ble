@@ -9,8 +9,9 @@ No cloud, no app.
 - Built-in pairing, automatic re-pairing, and a robust Bluetooth connection
 - Entities via MQTT discovery
 
-Set your stove's Bluetooth MAC address in the configuration and start the
-add-on; see the **Documentation** tab for details.
+Set your stove's Bluetooth MAC address in the configuration, put the stove in
+pairing mode (see your stove's manual, or power-cycle it), and start the
+add-on. See the **Documentation** tab for details.
 
 Unofficial project, not affiliated with Edilkamin. A pellet stove is a
 combustion appliance: do not rely on this add-on as a safety device, and use it
